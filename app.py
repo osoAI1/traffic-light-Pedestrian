@@ -10,41 +10,35 @@ import statistics
 app = Flask(__name__)
 CORS(app)
 
-# =========================
-# Logging
-# =========================
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-# =========================
-# Traffic Controller
-# =========================
 class TrafficController:
     def __init__(self):
         self.lock = Lock()
 
-        # FSM
-        self.state = "CAR_GREEN"
+       
+        self.state = "CAR_GREEN" # هبدا ب الاخضر يعني عربيات تعدي
         self.timer = 0
 
-        # Pedestrian
+       
         self.pedestrian_request = False
         self.request_count = 0
 
-        # Timing
+      
         self.MIN_GREEN = 10
         self.YELLOW_TIME = 3
         self.WALK_TIME = 7
 
-        # Suspension
+       
         self.suspended = False
         self.suspend_end_time = None
         self.suspended_state = None
 
-        # Statistics
+   
         self.cycle_count = 0
         self.state_change_count = 0
         self.system_start_time = time.time()
@@ -58,13 +52,11 @@ class TrafficController:
             "system_uptime": 0
         }
 
-        # History
+      #عشان الرسم البياني 
         self.state_history = deque(maxlen=1000)
         self.pedestrian_history = deque(maxlen=500)
 
         logger.info("Traffic Controller initialized")
-
-    # ================= FSM Helper =================
 
     def change_state(self, new_state):
         prev = self.state
@@ -73,7 +65,6 @@ class TrafficController:
         self.state_change_count += 1
         logger.info(f"STATE: {prev} → {new_state}")
 
-    # ================= Pedestrian =================
 
     def request_pedestrian(self):
         with self.lock:
@@ -91,7 +82,7 @@ class TrafficController:
 
             return False, "Request already pending"
 
-    # ================= Tick =================
+
 
     def tick(self):
         with self.lock:
@@ -110,7 +101,7 @@ class TrafficController:
                 "timer": self.timer
             })
 
-            # ========== FSM ==========
+           
             if self.state == "CAR_GREEN":
                 if self.pedestrian_request:
                     if self.timer >= self.MIN_GREEN:
@@ -143,7 +134,6 @@ class TrafficController:
                         statistics.mean(self.cycle_times), 1
                     )
 
-    # ================= Suspension =================
 
     def suspend(self, minutes, state="red"):
         with self.lock:
@@ -167,8 +157,6 @@ class TrafficController:
         self.change_state("CAR_GREEN")
         logger.info("System resumed")
 
-    # ================= Status =================
-
     def get_status(self):
         with self.lock:
             self.stats["system_uptime"] = int(time.time() - self.system_start_time)
@@ -186,14 +174,10 @@ class TrafficController:
     def reset(self):
         self.__init__()
 
-# =========================
-# Controller Instance
-# =========================
+
 controller = TrafficController()
 
-# =========================
-# Background Thread
-# =========================
+
 def scheduler():
     while True:
         time.sleep(1)
@@ -201,9 +185,6 @@ def scheduler():
 
 Thread(target=scheduler, daemon=True).start()
 
-# =========================
-# Routes
-# =========================
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -233,9 +214,7 @@ def reset():
     controller.reset()
     return jsonify({"success": True})
 
-# =========================
-# Run
-# =========================
+
 if __name__ == "__main__":
     logger.info("Starting FINAL Enhanced Traffic Control System")
     app.run(debug=True, host="0.0.0.0", port=5000)
